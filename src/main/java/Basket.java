@@ -1,11 +1,22 @@
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Basket {
     private HashMap<Item, Integer> items;
+    private Customer customer;
+    private final double LOYALTY_DISCOUNT = 0.02;
+    private final double VALUE_DISCOUNT = 0.1;
 
-    public Basket(){
+    public Basket(Customer customer){
         items = new HashMap<>();
+        this.customer = customer;
+    }
+
+    public Customer getCustomer(){
+        return customer;
+    }
+
+    public void setCustomer(Customer customer){
+        this.customer = customer;
     }
 
     public int countItems(){
@@ -41,7 +52,7 @@ public class Basket {
         items.clear();
     }
 
-    public double getTotal(){
+    public double getGrossTotal(){
         double total = 0;
         for(Item item : items.keySet()){
             double lineTotal = item.getPrice() * items.get(item);
@@ -50,7 +61,37 @@ public class Basket {
         return total;
     }
 
+    public double getDiscount(double total){
+        double discount = calculateBogoffDiscount();
+        discount += calculateValueDiscount(total - discount);
+        discount += calculateLoyaltyDiscount(total - discount);
+        return discount;
+    }
+
+    public double getNetTotal(){
+        double grossTotal = getGrossTotal();
+        return grossTotal - getDiscount(grossTotal);
+    }
+
     public int getQty(Item item){
         return items.getOrDefault(item, 0);
+    }
+
+    private double calculateBogoffDiscount(){
+        double total = 0;
+        for(Item item : items.keySet()){
+            if(!item.isBogof()) continue;
+            int qty = items.getOrDefault(item, 0);
+            total += qty / 2 * item.getPrice();
+        }
+        return total;
+    }
+
+    private double calculateLoyaltyDiscount(double total){
+        return customer.hasLoyaltyCard() ? total * LOYALTY_DISCOUNT: 0;
+    }
+
+    private double calculateValueDiscount(double total){
+        return total > 20 ? total * VALUE_DISCOUNT : 0;
     }
 }
